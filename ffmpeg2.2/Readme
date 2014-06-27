@@ -1,0 +1,8 @@
+
+
+
+1. need install files: allcodecs.c  Makefile  qsv.c  qsvenc.c  qsvenc.h  qsvenc_h264.c  qsv.h
+2. cp *  ffmpeg-2.2/libavcodec/
+3. cd ffmpeg-2.2
+4. ./configure --extra-libs="-lmfx -lsupc++ -lstdc++ -ldl -lva -lva-drm" --extra-ldflags="-L/opt/intel/mediasdk/lib" --extra-cflags="-I/opt/intel/mediasdk/include" --prefix="/opt/intel/mediasdk"
+5. make
