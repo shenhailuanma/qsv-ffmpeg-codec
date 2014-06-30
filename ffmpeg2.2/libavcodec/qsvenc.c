@@ -112,6 +112,21 @@ static void free_buffer_pool(QSVEncContext *q)
     av_freep(&q->buf);
 }
 
+static void init_param_default( QSVEncContext *q )
+{
+
+    memset(q, 0, sizeof(QSVEncContext));
+
+    q->param.mfx.CodecId            = 0;
+    q->param.mfx.CodecProfile       = q->options.profile;
+    q->param.mfx.CodecLevel         = q->options.level;
+    q->param.mfx.TargetUsage        = q->options.preset;
+    q->param.mfx.GopPicSize         = avctx->gop_size < 0 ? 0 : avctx->gop_size;
+    q->param.mfx.GopRefDist         = av_clip(avctx->max_b_frames, -1, 16) + 1;
+    q->param.mfx.GopOptFlag         = avctx->flags & CODEC_FLAG_CLOSED_GOP ?
+
+}
+
 static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
 {
     float quant;
@@ -285,6 +300,10 @@ static int get_video_param(AVCodecContext *avctx, QSVEncContext *q)
 
 int ff_qsv_enc_init(AVCodecContext *avctx, QSVEncContext *q)
 {
+    if(NULL == avctx || NULL == q){
+        return ff_qsv_error(MFX_ERR_NULL_PTR);
+    }
+
     int ret;
 
     q->ver.Major = QSV_VERSION_MAJOR;
@@ -356,6 +375,9 @@ int ff_qsv_enc_init(AVCodecContext *avctx, QSVEncContext *q)
         av_log(avctx, AV_LOG_ERROR, "MFXVideoCORE_SetHandle error! ret:%d\n", ret); 
         return ret;
     }
+
+    // init_param_default
+    init_param_default(q);
     
     q->param.IOPattern  = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
     q->param.AsyncDepth = q->options.async_depth;
