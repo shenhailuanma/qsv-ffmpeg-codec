@@ -131,7 +131,8 @@ static void init_param_default( QSVEncContext *q )
     q->param.mfx.BufferSizeInKB     = 0;
 
     q->param.mfx.RateControlMethod = MFX_RATECONTROL_CBR;
-
+    q->param.mfx.TargetKbps = 2000;
+    q->param.mfx.MaxKbps = 2000;
 }
 
 static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
@@ -161,10 +162,13 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
     if(avctx->refs)
         q->param.mfx.NumRefFrame        = avctx->refs;
 
-    q->param.mfx.RateControlMethod  =
-        (avctx->global_quality >= 0 || avctx->flags & CODEC_FLAG_QSCALE) ? MFX_RATECONTROL_CQP :
-        avctx->rc_max_rate && avctx->rc_max_rate == avctx->bit_rate ? MFX_RATECONTROL_CBR :
-                                                MFX_RATECONTROL_VBR;
+    if(avctx->bit_rate > 0 && avctx->rc_max_rate == avctx->bit_rate){
+        q->param.mfx.RateControlMethod = MFX_RATECONTROL_CBR;
+    }else if(avctx->bit_rate > 0 && avctx->rc_max_rate >= 0){
+        q->param.mfx.RateControlMethod = MFX_RATECONTROL_VBR;
+    }else{
+        q->param.mfx.RateControlMethod = MFX_RATECONTROL_CQP;
+    }
 
     switch (q->param.mfx.RateControlMethod) {
     case MFX_RATECONTROL_CBR: // API 1.0
