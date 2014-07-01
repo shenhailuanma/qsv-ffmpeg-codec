@@ -662,7 +662,7 @@ int ff_qsv_enc_frame(AVCodecContext *avctx, QSVEncContext *q,
 
         ret = MFX_ERR_MORE_DATA;
     }
-
+    busymsec = 0;
     do {
         if (q->pending_enc)
             insurf = &q->pending_enc->surface;
