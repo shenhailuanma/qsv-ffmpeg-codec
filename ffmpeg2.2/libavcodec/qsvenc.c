@@ -115,8 +115,6 @@ static void free_buffer_pool(QSVEncContext *q)
 static void init_param_default( QSVEncContext *q )
 {
 
-    memset(q, 0, sizeof(QSVEncContext));
-
     q->param.mfx.CodecId            = MFX_CODEC_AVC;
     q->param.mfx.CodecProfile       = MFX_PROFILE_AVC_MAIN;
     q->param.mfx.CodecLevel         = 0;
@@ -317,6 +315,7 @@ int ff_qsv_enc_init(AVCodecContext *avctx, QSVEncContext *q)
     if(NULL == avctx || NULL == q){
         return ff_qsv_error(MFX_ERR_NULL_PTR);
     }
+    memset(q, 0, sizeof(QSVEncContext));
 
     int ret;
 
