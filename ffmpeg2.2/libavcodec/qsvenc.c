@@ -117,13 +117,20 @@ static void init_param_default( QSVEncContext *q )
 
     memset(q, 0, sizeof(QSVEncContext));
 
-    q->param.mfx.CodecId            = 0;
-    q->param.mfx.CodecProfile       = q->options.profile;
-    q->param.mfx.CodecLevel         = q->options.level;
-    q->param.mfx.TargetUsage        = q->options.preset;
-    q->param.mfx.GopPicSize         = avctx->gop_size < 0 ? 0 : avctx->gop_size;
-    q->param.mfx.GopRefDist         = av_clip(avctx->max_b_frames, -1, 16) + 1;
-    q->param.mfx.GopOptFlag         = avctx->flags & CODEC_FLAG_CLOSED_GOP ?
+    q->param.mfx.CodecId            = MFX_CODEC_AVC;
+    q->param.mfx.CodecProfile       = MFX_PROFILE_AVC_MAIN;
+    q->param.mfx.CodecLevel         = 0;
+    q->param.mfx.TargetUsage        = 4;
+    q->param.mfx.GopPicSize         = 100;
+    q->param.mfx.GopRefDist         = 0;
+    q->param.mfx.GopOptFlag         = MFX_GOP_CLOSED;
+    q->param.mfx.IdrInterval        = 0; // every I-frame is an IDR-frame.
+    q->param.mfx.NumSlice           = 0;
+    q->param.mfx.NumRefFrame        = 0;
+    q->param.mfx.EncodedOrder       = 0;
+    q->param.mfx.BufferSizeInKB     = 0;
+
+    q->param.mfx.RateControlMethod = MFX_RATECONTROL_CBR;
 
 }
 
@@ -136,24 +143,27 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
     if (ret < 0)
         return ret;
     q->param.mfx.CodecId            = ret;
-    q->param.mfx.CodecProfile       = q->options.profile;
-    q->param.mfx.CodecLevel         = q->options.level;
-    q->param.mfx.TargetUsage        = q->options.preset;
-    q->param.mfx.GopPicSize         = avctx->gop_size < 0 ? 0 : avctx->gop_size;
+
+    if(q->options.profile > 0)
+        q->param.mfx.CodecProfile       = q->options.profile;
+    if(q->options.level > 0)
+        q->param.mfx.CodecLevel         = q->options.level;
+    if(q->options.preset > 0)
+        q->param.mfx.TargetUsage        = q->options.preset;
+    if(avctx->gop_size > 0)
+        q->param.mfx.GopPicSize         = avctx->gop_size;
+
     q->param.mfx.GopRefDist         = av_clip(avctx->max_b_frames, -1, 16) + 1;
-    q->param.mfx.GopOptFlag         = avctx->flags & CODEC_FLAG_CLOSED_GOP ?
-                                      MFX_GOP_CLOSED :
-                                      0;
-    q->param.mfx.IdrInterval        = q->options.idr_interval;
-    q->param.mfx.NumSlice           = avctx->slices;
-    q->param.mfx.NumRefFrame        = avctx->refs < 0 ? 0 : avctx->refs;
-    q->param.mfx.EncodedOrder       = 0;
-    q->param.mfx.BufferSizeInKB     = 0;
+
+    //q->param.mfx.IdrInterval        = 0;
+    if(avctx->slices > 0)
+        q->param.mfx.NumSlice           = avctx->slices;
+    if(avctx->refs)
+        q->param.mfx.NumRefFrame        = avctx->refs;
+
     q->param.mfx.RateControlMethod  =
-        (q->options.qpi >= 0 && q->options.qpp >= 0 && q->options.qpb >= 0) ||
-        avctx->flags & CODEC_FLAG_QSCALE      ? MFX_RATECONTROL_CQP :
-        avctx->rc_max_rate &&
-        avctx->rc_max_rate == avctx->bit_rate ? MFX_RATECONTROL_CBR :
+        (avctx->global_quality >= 0 || avctx->flags & CODEC_FLAG_QSCALE) ? MFX_RATECONTROL_CQP :
+        avctx->rc_max_rate && avctx->rc_max_rate == avctx->bit_rate ? MFX_RATECONTROL_CBR :
                                                 MFX_RATECONTROL_VBR;
 
     switch (q->param.mfx.RateControlMethod) {
