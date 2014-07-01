@@ -119,7 +119,7 @@ static void init_param_default( QSVEncContext *q )
     q->param.mfx.CodecProfile       = MFX_PROFILE_AVC_MAIN;
     q->param.mfx.CodecLevel         = 0;
     q->param.mfx.TargetUsage        = 4;
-    q->param.mfx.GopPicSize         = 100;
+    q->param.mfx.GopPicSize         = 50;
     q->param.mfx.GopRefDist         = 0;
     q->param.mfx.GopOptFlag         = MFX_GOP_CLOSED;
     q->param.mfx.IdrInterval        = 0; // every I-frame is an IDR-frame.
@@ -150,11 +150,11 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
     if(q->options.preset > 0)
         q->param.mfx.TargetUsage        = q->options.preset;
     if(avctx->gop_size > 0)
-        q->param.mfx.GopPicSize         = avctx->gop_size;
+        q->param.mfx.GopPicSize         = av_clip(avctx->gop_size, 0, 250);
 
     q->param.mfx.GopRefDist         = av_clip(avctx->max_b_frames, -1, 16) + 1;
 
-    //q->param.mfx.IdrInterval        = 0;
+    
     if(avctx->slices > 0)
         q->param.mfx.NumSlice           = avctx->slices;
     if(avctx->refs)
@@ -223,8 +223,12 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
     }
 
     q->param.mfx.FrameInfo.FourCC        = MFX_FOURCC_NV12;
+    // q->param.mfx.FrameInfo.PicStruct     = MFX_PICSTRUCT_UNKNOWN;  // use this init will error
+    q->param.mfx.FrameInfo.PicStruct     = MFX_PICSTRUCT_PROGRESSIVE;
+
     q->param.mfx.FrameInfo.Width         = FFALIGN(avctx->width, 16);
-    q->param.mfx.FrameInfo.Height        = FFALIGN(avctx->height, 32);
+    q->param.mfx.FrameInfo.Height        = q->param.mfx.FrameInfo.PicStruct == MFX_PICSTRUCT_PROGRESSIVE ? 
+                                                  FFALIGN(avctx->height, 16):FFALIGN(avctx->height, 32);
     q->param.mfx.FrameInfo.CropX         = 0;
     q->param.mfx.FrameInfo.CropY         = 0;
     q->param.mfx.FrameInfo.CropW         = avctx->width;
@@ -233,8 +237,7 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
     q->param.mfx.FrameInfo.FrameRateExtD = avctx->time_base.num;
     q->param.mfx.FrameInfo.AspectRatioW  = avctx->sample_aspect_ratio.num;
     q->param.mfx.FrameInfo.AspectRatioH  = avctx->sample_aspect_ratio.den;
-    // q->param.mfx.FrameInfo.PicStruct     = MFX_PICSTRUCT_UNKNOWN;  // use this init will error
-    q->param.mfx.FrameInfo.PicStruct     = MFX_PICSTRUCT_PROGRESSIVE;
+
     q->param.mfx.FrameInfo.ChromaFormat  = MFX_CHROMAFORMAT_YUV420;
 
     if ((q->param.mfx.FrameInfo.FrameRateExtN / q->param.mfx.FrameInfo.FrameRateExtD) > 1000) {
@@ -675,13 +678,16 @@ int ff_qsv_enc_frame(AVCodecContext *avctx, QSVEncContext *q,
                                               &outbuf->bs, &outbuf->sync);
             if(ret == MFX_WRN_DEVICE_BUSY){
 
-                busymsec++;
-                av_log(avctx, AV_LOG_WARNING, "Timeout, device is so busy. cnt:%d\n", busymsec);
-                av_usleep(1000);
+                busymsec += 5;
+                //av_log(avctx, AV_LOG_WARNING, "Timeout, device is so busy. cnt:%d\n", busymsec);
+                av_usleep(5000);
             }
+            if (busymsec > q->options.timeout) {
+                av_log(avctx, AV_LOG_WARNING, "Timeout, device is so busy. cnt:%d\n", busymsec);
+                break;
+            }
+        }while(ret == MFX_WRN_DEVICE_BUSY);
 
-        }while(ret == MFX_WRN_DEVICE_BUSY)
-        
         if (ret == MFX_WRN_DEVICE_BUSY) {
             if (busymsec > q->options.timeout) {
                 av_log(avctx, AV_LOG_WARNING, "Timeout, device is so busy\n");
