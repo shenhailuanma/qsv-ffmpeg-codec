@@ -394,7 +394,8 @@ int ff_qsv_enc_init(AVCodecContext *avctx, QSVEncContext *q)
     init_param_default(q);
     
     q->param.IOPattern  = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
-    q->param.AsyncDepth = q->options.async_depth;
+    //q->param.AsyncDepth = q->options.async_depth;
+    q->param.AsyncDepth = ASYNC_DEPTH_DEFAULT;
 
     ret = init_video_param(avctx, q);
     if (ret < 0){
