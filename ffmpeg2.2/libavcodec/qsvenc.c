@@ -662,7 +662,7 @@ int ff_qsv_enc_frame(AVCodecContext *avctx, QSVEncContext *q,
 
         ret = MFX_ERR_MORE_DATA;
     }
-    busymsec = 0;
+    
     do {
         if (q->pending_enc)
             insurf = &q->pending_enc->surface;
@@ -678,7 +678,7 @@ int ff_qsv_enc_frame(AVCodecContext *avctx, QSVEncContext *q,
                                               &outbuf->bs, &outbuf->sync);
             if(ret == MFX_WRN_DEVICE_BUSY){
 
-                busymsec += 5;
+                busymsec += 1;
                 //av_log(avctx, AV_LOG_WARNING, "Timeout, device is so busy. cnt:%d\n", busymsec);
                 av_usleep(5000);
             }
