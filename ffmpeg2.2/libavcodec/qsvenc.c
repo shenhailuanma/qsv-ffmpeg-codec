@@ -670,9 +670,18 @@ int ff_qsv_enc_frame(AVCodecContext *avctx, QSVEncContext *q,
         if (!outbuf)
             return AVERROR(ENOMEM);
 
-        ret = MFXVideoENCODE_EncodeFrameAsync(q->session, NULL, insurf,
+        do{
+            ret = MFXVideoENCODE_EncodeFrameAsync(q->session, NULL, insurf,
                                               &outbuf->bs, &outbuf->sync);
+            if(ret == MFX_WRN_DEVICE_BUSY){
 
+                busymsec++;
+                av_log(avctx, AV_LOG_WARNING, "Timeout, device is so busy. cnt:%d\n", busymsec);
+                av_usleep(1000);
+            }
+
+        }while(ret == MFX_WRN_DEVICE_BUSY)
+        
         if (ret == MFX_WRN_DEVICE_BUSY) {
             if (busymsec > q->options.timeout) {
                 av_log(avctx, AV_LOG_WARNING, "Timeout, device is so busy\n");
