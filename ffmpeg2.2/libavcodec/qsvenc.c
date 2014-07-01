@@ -160,7 +160,7 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
     if(avctx->slices > 0)
         q->param.mfx.NumSlice           = avctx->slices;
     if(avctx->refs)
-        q->param.mfx.NumRefFrame        = avctx->refs;
+        q->param.mfx.NumRefFrame        = av_clip(avctx->refs, 0, 4);
 
     if(avctx->bit_rate > 0 && avctx->rc_max_rate == avctx->bit_rate){
         q->param.mfx.RateControlMethod = MFX_RATECONTROL_CBR;
