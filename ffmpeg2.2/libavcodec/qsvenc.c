@@ -224,6 +224,7 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
 
     q->param.mfx.FrameInfo.FourCC        = MFX_FOURCC_NV12;
     // q->param.mfx.FrameInfo.PicStruct     = MFX_PICSTRUCT_UNKNOWN;  // use this init will error
+    av_log(avctx, AV_LOG_VERBOSE, "field_order:%d \n", avctx->field_order);
     q->param.mfx.FrameInfo.PicStruct     = MFX_PICSTRUCT_PROGRESSIVE;
 
     q->param.mfx.FrameInfo.Width         = FFALIGN(avctx->width, 16);
