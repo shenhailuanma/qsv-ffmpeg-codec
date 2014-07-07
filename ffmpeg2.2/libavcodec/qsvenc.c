@@ -133,7 +133,7 @@ static void init_param_default( QSVEncContext *q )
     q->param.mfx.MaxKbps = 2000;
 }
 
-static void parse_h264_qsv_params(QSVH264EncContext * qh)
+static void parse_h264_qsv_params(AVCodecContext *avctx, QSVH264EncContext * qh)
 {
     if(qh->h264_qsv_params){
         av_log(avctx, AV_LOG_VERBOSE, "h264_qsv_params not NULL, to parse it.\n");
@@ -165,7 +165,7 @@ static int init_video_param(AVCodecContext *avctx, QSVH264EncContext * qh)
     QSVEncContext *q = &qh->qsv;
 
     // parse h264_qsv_params
-
+    parse_h264_qsv_params(avctx, qh);
 
     ret = ff_qsv_codec_id_to_mfx(avctx->codec_id);
     if (ret < 0)
