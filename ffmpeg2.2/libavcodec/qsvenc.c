@@ -141,7 +141,7 @@ static void parse_h264_qsv_params(AVCodecContext *avctx, QSVH264EncContext * qh)
         AVDictionary *dict    = NULL;
         AVDictionaryEntry *en = NULL;
 
-        if (!av_dict_parse_string(&dict, x4->x264_params, "=", ":", 0)) {
+        if (!av_dict_parse_string(&dict, qh->h264_qsv_params, "=", ":", 0)) {
             while ((en = av_dict_get(dict, "", en, AV_DICT_IGNORE_SUFFIX))) {
                 av_log(avctx, AV_LOG_VERBOSE, "h264_qsv_params %s=%s\n", en->key, en->value);
                 //if (x264_param_parse(&x4->params, en->key, en->value) < 0)
