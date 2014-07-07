@@ -60,14 +60,6 @@ static av_cold int qsv_enc_close(AVCodecContext *avctx)
 #define OFFSET(x) offsetof(QSVH264EncContext, x)
 #define VE AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM
 static const AVOption options[] = {
-    { "async_depth", "Maximum processing parallelism", OFFSET(async_depth), AV_OPT_TYPE_INT, { .i64 = ASYNC_DEPTH_DEFAULT }, 0, INT_MAX, VE },
-    { "timeout", "Maximum timeout in milliseconds when the device has been busy", OFFSET(timeout), AV_OPT_TYPE_INT, { .i64 = TIMEOUT_DEFAULT }, 0, INT_MAX, VE },
-    { "qpi", NULL, OFFSET(qpi), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 51, VE },
-    { "qpp", NULL, OFFSET(qpp), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 51, VE },
-    { "qpb", NULL, OFFSET(qpb), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 51, VE },
-    { "idr_interval", NULL, OFFSET(idr_interval), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, VE },
-    { "profile", NULL, OFFSET(profile), AV_OPT_TYPE_INT, { .i64 = MFX_PROFILE_AVC_MAIN }, 0, INT_MAX, VE },
-    { "preset", NULL, OFFSET(preset), AV_OPT_TYPE_INT, { .i64 = MFX_TARGETUSAGE_BALANCED }, MFX_TARGETUSAGE_UNKNOWN, MFX_TARGETUSAGE_BEST_SPEED, VE},
     { "h264_qsv_params",  "Override the h264_qsv configuration using a :-separated list of key=value parameters", OFFSET(h264_qsv_params), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VE },
     { NULL },
 };

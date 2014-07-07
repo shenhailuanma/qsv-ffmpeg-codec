@@ -83,7 +83,7 @@ typedef struct QSVH264EncContext {
     AVClass *class;
     QSVEncContext qsv;
     // options
-    int async_depth;
+    int async_depth; // 
     int timeout;
     int qpi;
     int qpp;

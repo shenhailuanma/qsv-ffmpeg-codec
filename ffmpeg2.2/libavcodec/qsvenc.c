@@ -133,12 +133,39 @@ static void init_param_default( QSVEncContext *q )
     q->param.mfx.MaxKbps = 2000;
 }
 
+static void parse_h264_qsv_params(QSVH264EncContext * qh)
+{
+    if(qh->h264_qsv_params){
+        av_log(avctx, AV_LOG_VERBOSE, "h264_qsv_params not NULL, to parse it.\n");
+
+        AVDictionary *dict    = NULL;
+        AVDictionaryEntry *en = NULL;
+
+        if (!av_dict_parse_string(&dict, x4->x264_params, "=", ":", 0)) {
+            while ((en = av_dict_get(dict, "", en, AV_DICT_IGNORE_SUFFIX))) {
+                av_log(avctx, AV_LOG_VERBOSE, "h264_qsv_params %s=%s\n", en->key, en->value);
+                //if (x264_param_parse(&x4->params, en->key, en->value) < 0)
+                //    av_log(avctx, AV_LOG_WARNING,
+                //           "Error parsing option '%s = %s'.\n",
+                //            en->key, en->value);
+            }
+
+            av_dict_free(&dict);
+        }
+    }else{
+        av_log(avctx, AV_LOG_VERBOSE, "h264_qsv_params is NULL, no need to parse it.\n");
+    }    
+}
+
 static int init_video_param(AVCodecContext *avctx, QSVH264EncContext * qh)
 {
     float quant;
     int ret;
 
     QSVEncContext *q = &qh->qsv;
+
+    // parse h264_qsv_params
+
 
     ret = ff_qsv_codec_id_to_mfx(avctx->codec_id);
     if (ret < 0)
