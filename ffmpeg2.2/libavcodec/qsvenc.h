@@ -78,6 +78,23 @@ typedef struct QSVEncContext {
     QSVEncOptions options;
 } QSVEncContext;
 
+
+typedef struct QSVH264EncContext {
+    AVClass *class;
+    QSVEncContext qsv;
+    // options
+    int async_depth;
+    int timeout;
+    int qpi;
+    int qpp;
+    int qpb;
+    int idr_interval;
+    int profile;
+    int level;
+    int preset;
+    int open_gop;
+} QSVH264EncContext;
+
 int ff_qsv_enc_init(AVCodecContext *avctx, QSVEncContext *q);
 
 int ff_qsv_enc_frame(AVCodecContext *avctx, QSVEncContext *q,

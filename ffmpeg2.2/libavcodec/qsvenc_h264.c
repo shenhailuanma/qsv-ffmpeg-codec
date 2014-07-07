@@ -32,16 +32,12 @@
 #include "qsv.h"
 #include "qsvenc.h"
 
-typedef struct QSVH264EncContext {
-    AVClass *class;
-    QSVEncContext qsv;
-} QSVH264EncContext;
 
 static av_cold int qsv_enc_init(AVCodecContext *avctx)
 {
     QSVH264EncContext *q = avctx->priv_data;
-
-    return ff_qsv_enc_init(avctx, &q->qsv);
+    return ff_qsv_enc_init(avctx, q);
+    //return ff_qsv_enc_init(avctx, &q->qsv);
 }
 
 static int qsv_enc_frame(AVCodecContext *avctx, AVPacket *pkt,
@@ -61,6 +57,18 @@ static av_cold int qsv_enc_close(AVCodecContext *avctx)
 
 #define OFFSET(x) offsetof(QSVH264EncContext, x)
 #define VE AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM
+static const AVOption options[] = {
+    { "async_depth", "Maximum processing parallelism", OFFSET(async_depth), AV_OPT_TYPE_INT, { .i64 = ASYNC_DEPTH_DEFAULT }, 0, INT_MAX, VE },
+    { "timeout", "Maximum timeout in milliseconds when the device has been busy", OFFSET(timeout), AV_OPT_TYPE_INT, { .i64 = TIMEOUT_DEFAULT }, 0, INT_MAX, VE },
+    { "qpi", NULL, OFFSET(qpi), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 51, VE },
+    { "qpp", NULL, OFFSET(qpp), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 51, VE },
+    { "qpb", NULL, OFFSET(qpb), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 51, VE },
+    { "idr_interval", NULL, OFFSET(idr_interval), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, VE },
+    { "profile", NULL, OFFSET(profile), AV_OPT_TYPE_INT, { .i64 = MFX_PROFILE_UNKNOWN }, 0, INT_MAX, VE, "profile" },
+    { "preset", NULL, OFFSET(preset), AV_OPT_TYPE_INT, { .i64 = MFX_TARGETUSAGE_BALANCED }, MFX_TARGETUSAGE_UNKNOWN, MFX_TARGETUSAGE_BEST_SPEED, VE, "preset" },
+    { NULL },
+};
+/*
 static const AVOption options[] = {
     { "async_depth", "Maximum processing parallelism", OFFSET(qsv.options.async_depth), AV_OPT_TYPE_INT, { .i64 = ASYNC_DEPTH_DEFAULT }, 0, INT_MAX, VE },
     { "timeout", "Maximum timeout in milliseconds when the device has been busy", OFFSET(qsv.options.timeout), AV_OPT_TYPE_INT, { .i64 = TIMEOUT_DEFAULT }, 0, INT_MAX, VE },
@@ -98,6 +106,7 @@ static const AVOption options[] = {
     { "quality" , NULL, 0, AV_OPT_TYPE_CONST, { .i64 = MFX_TARGETUSAGE_BEST_QUALITY  }, INT_MIN, INT_MAX, VE, "preset" },
     { NULL },
 };
+*/
 
 static const AVClass class = {
     .class_name = "h264_qsv encoder",

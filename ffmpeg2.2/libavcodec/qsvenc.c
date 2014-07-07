@@ -133,22 +133,24 @@ static void init_param_default( QSVEncContext *q )
     q->param.mfx.MaxKbps = 2000;
 }
 
-static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
+static int init_video_param(AVCodecContext *avctx, QSVH264EncContext * qh)
 {
     float quant;
     int ret;
+
+    QSVEncContext *q = &qh->qsv;
 
     ret = ff_qsv_codec_id_to_mfx(avctx->codec_id);
     if (ret < 0)
         return ret;
     q->param.mfx.CodecId            = ret;
 
-    if(q->options.profile > 0)
-        q->param.mfx.CodecProfile       = q->options.profile;
-    if(q->options.level > 0)
-        q->param.mfx.CodecLevel         = q->options.level;
-    if(q->options.preset > 0)
-        q->param.mfx.TargetUsage        = q->options.preset;
+    if(qh->profile > 0)
+        q->param.mfx.CodecProfile       = qh->profile;
+    if(qh->level > 0)
+        q->param.mfx.CodecLevel         = qh->level;
+    if(qh->preset > 0)
+        q->param.mfx.TargetUsage        = qh->preset;
     if(avctx->gop_size > 0)
         q->param.mfx.GopPicSize         = av_clip(avctx->gop_size, 0, 250);
 
@@ -185,8 +187,8 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
         break;
     case MFX_RATECONTROL_CQP: // API 1.1
         av_log(avctx, AV_LOG_VERBOSE, "RateControlMethod: CQP\n");
-        if (q->options.qpi >= 0) {
-            q->param.mfx.QPI = q->options.qpi;
+        if (qh->qpi >= 0) {
+            q->param.mfx.QPI = qh->qpi;
         } else {
             quant = avctx->global_quality / FF_QP2LAMBDA;
             if (avctx->i_quant_factor)
@@ -195,15 +197,15 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
             q->param.mfx.QPI = av_clip(quant, 0, 51);
         }
 
-        if (q->options.qpp >= 0) {
-            q->param.mfx.QPP = q->options.qpp;
+        if (qh->qpp >= 0) {
+            q->param.mfx.QPP = qh->qpp;
         } else {
             quant = avctx->global_quality / FF_QP2LAMBDA;
             q->param.mfx.QPP = av_clip(quant, 0, 51);
         }
 
-        if (q->options.qpb >= 0) {
-            q->param.mfx.QPB = q->options.qpb;
+        if (qh->qpb >= 0) {
+            q->param.mfx.QPB = qh->qpb;
         } else {
             quant = avctx->global_quality / FF_QP2LAMBDA;
             if (avctx->b_quant_factor)
@@ -314,11 +316,13 @@ static int get_video_param(AVCodecContext *avctx, QSVEncContext *q)
     return 0;
 }
 
-int ff_qsv_enc_init(AVCodecContext *avctx, QSVEncContext *q)
+int ff_qsv_enc_init(AVCodecContext *avctx, QSVH264EncContext * qh)
 {
-    if(NULL == avctx || NULL == q){
+    if(NULL == avctx || NULL == qh){
         return ff_qsv_error(MFX_ERR_NULL_PTR);
     }
+    QSVEncContext *q = &qh->qsv;
+
     memset(q, 0, sizeof(QSVEncContext));
 
     int ret;
