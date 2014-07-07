@@ -64,8 +64,8 @@ static const AVOption options[] = {
     { "qpp", NULL, OFFSET(qpp), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 51, VE },
     { "qpb", NULL, OFFSET(qpb), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 51, VE },
     { "idr_interval", NULL, OFFSET(idr_interval), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, VE },
-    { "profile", NULL, OFFSET(profile), AV_OPT_TYPE_INT, { .i64 = MFX_PROFILE_UNKNOWN }, 0, INT_MAX, VE, "profile" },
-    { "preset", NULL, OFFSET(preset), AV_OPT_TYPE_INT, { .i64 = MFX_TARGETUSAGE_BALANCED }, MFX_TARGETUSAGE_UNKNOWN, MFX_TARGETUSAGE_BEST_SPEED, VE, "preset" },
+    { "profile", NULL, OFFSET(profile), AV_OPT_TYPE_INT, { .i64 = MFX_PROFILE_AVC_MAIN }, 0, INT_MAX, VE },
+    { "preset", NULL, OFFSET(preset), AV_OPT_TYPE_INT, { .i64 = MFX_TARGETUSAGE_BALANCED }, MFX_TARGETUSAGE_UNKNOWN, MFX_TARGETUSAGE_BEST_SPEED, VE},
     { NULL },
 };
 /*
