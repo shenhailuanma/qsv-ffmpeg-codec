@@ -404,7 +404,7 @@ int ff_qsv_enc_init(AVCodecContext *avctx, QSVH264EncContext * qh)
     //q->param.AsyncDepth = q->options.async_depth;
     q->param.AsyncDepth = ASYNC_DEPTH_DEFAULT;
 
-    ret = init_video_param(avctx, q);
+    ret = init_video_param(avctx, qh);
     if (ret < 0){
         av_log(avctx, AV_LOG_ERROR, "init_video_param error!\n"); 
         return ret;
