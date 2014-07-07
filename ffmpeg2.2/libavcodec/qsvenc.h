@@ -95,7 +95,7 @@ typedef struct QSVH264EncContext {
     int open_gop;
 } QSVH264EncContext;
 
-int ff_qsv_enc_init(AVCodecContext *avctx, QSVEncContext *q);
+int ff_qsv_enc_init(AVCodecContext *avctx, QSVH264EncContext * qh);
 
 int ff_qsv_enc_frame(AVCodecContext *avctx, QSVEncContext *q,
                      AVPacket *pkt, const AVFrame *frame, int *got_packet);
