@@ -133,6 +133,145 @@ static void init_param_default( QSVEncContext *q )
     q->param.mfx.MaxKbps = 2000;
 }
 
+static int profile_string_to_int( const char *str )
+{
+    if( !strcasecmp( str, "baseline" ) )
+        return MFX_PROFILE_AVC_BASELINE;
+    if( !strcasecmp( str, "main" ) )
+        return MFX_PROFILE_AVC_MAIN;
+    if( !strcasecmp( str, "high" ) )
+        return MFX_PROFILE_AVC_HIGH;
+    if( !strcasecmp( str, "extended" ) )
+        return MFX_PROFILE_AVC_EXTENDED;
+
+    return -1;
+}
+
+
+static int parse_enum( const char *arg, const char * const *names, int *dst )
+{
+    for( int i = 0; names[i]; i++ )
+        if( !strcmp( arg, names[i] ) )
+        {
+            *dst = i;
+            return 0;
+        }
+    return -1;
+}
+
+static int parse_cqm( const char *str, uint8_t *cqm, int length )
+{
+    int i = 0;
+    do {
+        int coef;
+        if( !sscanf( str, "%d", &coef ) || coef < 1 || coef > 255 )
+            return -1;
+        cqm[i++] = coef;
+    } while( i < length && (str = strchr( str, ',' )) && str++ );
+    return (i == length) ? 0 : -1;
+}
+
+static int h264_qsv_atobool( const char *str, int *b_error )
+{
+    if( !strcmp(str, "1") ||
+        !strcmp(str, "true") ||
+        !strcmp(str, "yes") )
+        return 1;
+    if( !strcmp(str, "0") ||
+        !strcmp(str, "false") ||
+        !strcmp(str, "no") )
+        return 0;
+    *b_error = 1;
+    return 0;
+}
+
+static int h264_qsv_atoi( const char *str, int *b_error )
+{
+    char *end;
+    int v = strtol( str, &end, 0 );
+    if( end == str || *end != '\0' )
+        *b_error = 1;
+    return v;
+}
+
+static double h264_qsv_atof( const char *str, int *b_error )
+{
+    char *end;
+    double v = strtod( str, &end );
+    if( end == str || *end != '\0' )
+        *b_error = 1;
+    return v;
+}
+
+#define atobool(str) ( name_was_bool = 1, h264_qsv_atobool( str, &b_error ) )
+#define atoi(str) h264_qsv_atoi( str, &b_error )
+#define atof(str) h264_qsv_atof( str, &b_error )
+
+static int parse_qsv_params(AVCodecContext *avctx, QSVH264EncContext * qh, const char *name, const char *value)
+{
+    char *name_buf = NULL;
+    int b_error = 0;
+    int name_was_bool;
+    int value_was_null = !value;
+    int i;
+    int val;
+
+
+    if( !name ){
+        av_log(avctx, AV_LOG_WARNING,"Error: bad param name.\n");
+        return -1;
+    }
+        
+    if( !value )
+        value = "true";
+
+    if( value[0] == '=' )
+        value++;
+
+    if( strchr( name, '_' ) ) // s/_/-/g
+    {
+        char *c;
+        name_buf = strdup(name);
+        while( (c = strchr( name_buf, '_' )) )
+            *c = '-';
+        name = name_buf;
+    }
+
+    if( (!strncmp( name, "no-", 3 ) && (i = 3)) ||
+        (!strncmp( name, "no", 2 ) && (i = 2)) )
+    {
+        name += i;
+        value = atobool(value) ? "false" : "true";
+    }
+    name_was_bool = 0;
+
+#define OPT(STR) else if( !strcmp( name, STR ) )
+#define OPT2(STR0, STR1) else if( !strcmp( name, STR0 ) || !strcmp( name, STR1 ) )
+
+    if(0);
+    OPT("profile"){
+        qh->profile = profile_string_to_int(value);
+        if(qh->profile < 0){
+            return -1;
+        }
+    }
+    else
+        return X264_PARAM_BAD_NAME;
+
+
+#undef OPT
+#undef OPT2
+#undef atobool
+#undef atoi
+#undef atof
+
+    if( name_buf )
+        free( name_buf );
+
+    b_error |= value_was_null && !name_was_bool;
+    return b_error ? -1 : 0;
+}
+
 static void parse_h264_qsv_params(AVCodecContext *avctx, QSVH264EncContext * qh)
 {
     if(qh->h264_qsv_params){
@@ -144,10 +283,9 @@ static void parse_h264_qsv_params(AVCodecContext *avctx, QSVH264EncContext * qh)
         if (!av_dict_parse_string(&dict, qh->h264_qsv_params, "=", ":", 0)) {
             while ((en = av_dict_get(dict, "", en, AV_DICT_IGNORE_SUFFIX))) {
                 av_log(avctx, AV_LOG_VERBOSE, "h264_qsv_params %s=%s\n", en->key, en->value);
-                //if (x264_param_parse(&x4->params, en->key, en->value) < 0)
-                //    av_log(avctx, AV_LOG_WARNING,
-                //           "Error parsing option '%s = %s'.\n",
-                //            en->key, en->value);
+                
+                if (parse_qsv_params(avctx, qh, en->key, en->value) < 0)
+                    av_log(avctx, AV_LOG_WARNING,"Error parsing option '%s = %s'.\n",en->key, en->value);
             }
 
             av_dict_free(&dict);
