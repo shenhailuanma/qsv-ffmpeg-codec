@@ -256,7 +256,7 @@ static int parse_qsv_params(AVCodecContext *avctx, QSVH264EncContext * qh, const
         }
     }
     else
-        return X264_PARAM_BAD_NAME;
+        return -1;
 
 
 #undef OPT
