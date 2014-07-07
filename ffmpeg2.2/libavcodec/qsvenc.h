@@ -93,6 +93,7 @@ typedef struct QSVH264EncContext {
     int level;
     int preset;
     int open_gop;
+    int coder_type;
     char * h264_qsv_params;
 } QSVH264EncContext;
 

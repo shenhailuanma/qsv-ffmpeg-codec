@@ -21,6 +21,7 @@
  */
 
 #include <string.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <mfx/mfxvideo.h>
 
@@ -112,9 +113,12 @@ static void free_buffer_pool(QSVEncContext *q)
     av_freep(&q->buf);
 }
 
-static void init_param_default( QSVEncContext *q )
+static void init_param_default(QSVH264EncContext * qh, QSVEncContext *q )
 {
+    // init options
+    //qh->coder_type    =  FF_CODER_TYPE_VLC;
 
+    // init mfx params
     q->param.mfx.CodecId            = MFX_CODEC_AVC;
     q->param.mfx.CodecProfile       = MFX_PROFILE_AVC_MAIN;
     q->param.mfx.CodecLevel         = 0;
@@ -141,12 +145,25 @@ static int profile_string_to_int( const char *str )
         return MFX_PROFILE_AVC_MAIN;
     if( !strcasecmp( str, "high" ) )
         return MFX_PROFILE_AVC_HIGH;
-    if( !strcasecmp( str, "extended" ) )
-        return MFX_PROFILE_AVC_EXTENDED;
+    //if( !strcasecmp( str, "extended" ) )
+    //    return MFX_PROFILE_AVC_EXTENDED;
 
     return -1;
 }
 
+static int preset_string_to_int( const char *str )
+{
+    if( !strcasecmp( str, "quality" ) )
+        return MFX_TARGETUSAGE_BEST_QUALITY;
+    if( !strcasecmp( str, "normal" ) )
+        return MFX_TARGETUSAGE_BALANCED;
+    if( !strcasecmp( str, "speed" ) )
+        return MFX_TARGETUSAGE_BEST_SPEED;
+    //if( !strcasecmp( str, "extended" ) )
+    //    return MFX_PROFILE_AVC_EXTENDED;
+
+    return -1;
+}
 
 static int parse_enum( const char *arg, const char * const *names, int *dst )
 {
@@ -252,7 +269,13 @@ static int parse_qsv_params(AVCodecContext *avctx, QSVH264EncContext * qh, const
     OPT("profile"){
         qh->profile = profile_string_to_int(value);
         if(qh->profile < 0){
-            return -1;
+            b_error = -1;
+        }
+    }
+    OPT("preset"){
+        qh->preset = preset_string_to_int(value);
+        if(qh->preset < 0){
+            b_error =  -1;
         }
     }
     else
@@ -269,6 +292,7 @@ static int parse_qsv_params(AVCodecContext *avctx, QSVH264EncContext * qh, const
         free( name_buf );
 
     b_error |= value_was_null && !name_was_bool;
+
     return b_error ? -1 : 0;
 }
 
@@ -563,7 +587,7 @@ int ff_qsv_enc_init(AVCodecContext *avctx, QSVH264EncContext * qh)
     }
 
     // init_param_default
-    init_param_default(q);
+    init_param_default(qh, q);
     
     q->param.IOPattern  = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
     //q->param.AsyncDepth = q->options.async_depth;
